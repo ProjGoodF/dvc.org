@@ -1,4 +1,6 @@
 import startCase from 'lodash.startcase'
+import kebabCase from 'lodash.kebabcase'
+import sidebar from '../sidebar'
 
 export default class SidebarMenuHelper {
   static fillFilesArray(section, file, arr) {
@@ -8,6 +10,54 @@ export default class SidebarMenuHelper {
     arr[path] = startCase(
       SidebarMenuHelper.removeExtensionFromFileName(filename)
     )
+  }
+
+  static getZeroFile = arr => {
+    if (typeof arr[0] !== 'string') {
+      return arr[0].indexFile || arr[0]
+    } else {
+      this.getZeroFile(arr[0].files)
+    }
+  }
+
+  static findFileByName = (item, find) => {
+    let file = null
+    if (
+      (typeof item === 'string' && item.slice(0, -3) === find) ||
+      (item.indexFile && item.indexFile.slice(0, -3) === find)
+    ) {
+      file = item
+    } else if (item.name && kebabCase(item.name) === find) {
+      file = item.files[0]
+    }
+    return file
+  }
+
+  //доделать!
+  static getFile = (arr, find, x, callback) => {
+    for (let i = 0; i < arr.length; i++) {
+      let newfile = SidebarMenuHelper.findFileByName(arr[i], find)
+      if (newfile) {
+        callback(i)
+        return newfile
+      } else if (arr[i].files) {
+        SidebarMenuHelper.getFile(arr[i].files, find, x, callback)
+      }
+    }
+  }
+
+  static getFileFromUrl = path => {
+    let indexes = [],
+      file = SidebarMenuHelper.getZeroFile(sidebar)
+    for (let x = 2; x < path.length; x++) {
+      file = SidebarMenuHelper.getFile(sidebar, path[x], x, i => {
+        indexes.push(i)
+      })
+    }
+    return {
+      file: file,
+      indexes: indexes
+    }
   }
 
   static getName = (labels = null, folder = null, indexFile = null, names) => {
