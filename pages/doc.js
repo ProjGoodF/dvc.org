@@ -99,9 +99,7 @@ export default class Documentation extends Component {
 
   onSectionSelect = (section, e) => {
     e && e.preventDefault()
-    const file = sidebar[section].indexFile
-      ? sidebar[section].indexFile
-      : sidebar[section].files[0]
+    const file = sidebar[section].indexFile || sidebar[section].files[0]
     e && this.setCurrentPath(section)
     this.loadFile({ section, file, parseHeadings: false })
   }
@@ -116,31 +114,24 @@ export default class Documentation extends Component {
     this.loadFile({ section, subsection, file, parseHeadings: true })
   }
 
-  loadFile = ({ section, subsection, file, parseHeadings }) => {
-    this.setState({ load: true })
-    let folderpath = file.folder
-      ? file.folder
-      : subsection
-      ? sidebar[section].files[subsection].folder
-      : sidebar[section].folder
-    let filepath = file.indexFile
-      ? file.indexFile
-      : file.files
-      ? file.files
-      : file
+  setCurrentFile = (
+    section,
+    subsection,
+    file,
+    folderpath,
+    filepath,
+    parseHeadings
+  ) => {
+    let helper = SidebarMenuHelper
     fetch(`${folderpath}/${filepath}`)
       .then(res => {
         res.text().then(text => {
           this.setState(
             {
               currentSection: section,
-              currentFile: folderpath
-                ? `${folderpath}/${file.indexFile ? file.indexFile : file}`
-                : subsection
-                ? `${sidebar[section].files[subsection].folder}/${
-                    file.indexFile
-                  }`
-                : `${sidebar[section].folder}/${file}`,
+              currentFile:
+                helper.getFullPath(folderpath, file) ||
+                helper.getPath(section, subsection, file),
               markdown: text,
               headings: [],
               pageNotFound: false,
@@ -157,6 +148,23 @@ export default class Documentation extends Component {
       .catch(() => {
         window.location.reload()
       })
+  }
+
+  loadFile = ({ section, subsection, file, parseHeadings }) => {
+    this.setState({ load: true })
+    let sect = sidebar[section]
+    let subsect = sect.files[subsection]
+    let subfold = subsect && subsect.folder
+    let folderpath = file.folder || subfold || sect.folder
+    let filepath = file.indexFile || file.files || file
+    this.setCurrentFile(
+      section,
+      subsection,
+      file,
+      folderpath,
+      filepath,
+      parseHeadings
+    )
   }
 
   parseHeadings = text => {

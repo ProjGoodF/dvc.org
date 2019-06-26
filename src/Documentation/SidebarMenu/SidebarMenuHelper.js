@@ -120,8 +120,16 @@ export default class SidebarMenuHelper {
     else return null
   }
 
+  static getPath(section, subsection = null, file) {
+    let sect = sidebar[section]
+    let subsect = sect.files[subsection]
+    let subfold = subsect && subsect.folder
+    let path = subfold && `${subfold}/${file.indexFile}`
+    return path || `${sect.folder}/${file}`
+  }
+
   static getFullPath(folder, file) {
-    return `${folder}/${file}`
+    return folder && `${folder}/${file.indexFile || file}`
   }
 
   static extractFilename(file) {
@@ -129,6 +137,6 @@ export default class SidebarMenuHelper {
   }
 
   static getParentFolder(file, section) {
-    return file.folder ? file.folder : section.folder
+    return file.folder || section.folder
   }
 }
