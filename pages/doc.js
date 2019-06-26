@@ -78,21 +78,14 @@ export default class Documentation extends Component {
   }
 
   getLinkHref = (section, subsection = null, file = null) => {
-    const sectionSlug = sidebar[section].indexFile
-      ? SidebarMenuHelper.removeExtensionFromFileName(
-          sidebar[section].indexFile
-        )
-      : kebabCase(sidebar[section].name)
-    const subsectionSlug = subsection
-      ? sidebar[section].files[subsection].indexFile
-        ? sidebar[section].files[subsection].indexFile.slice(0, -3)
-        : sidebar[section].files[subsection]
-      : undefined
-    const fileSlug = file
-      ? typeof file === 'string'
-        ? file.slice(0, -3)
-        : file.files[0]
-      : undefined
+    let sect = sidebar[section]
+    let helper = filename =>
+      SidebarMenuHelper.removeExtensionFromFileName(filename)
+    const sectionSlug = helper(sect.indexFile) || kebabCase(sect.name)
+    const subsectionSlug =
+      (subsection && helper(sect.files[subsection].indexFile)) ||
+      sect.files[subsection]
+    const fileSlug = helper(file) || (file && file.files[0])
     return `/doc/${compact([sectionSlug, subsectionSlug, fileSlug]).join('/')}`
   }
 
