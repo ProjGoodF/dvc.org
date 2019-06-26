@@ -56,16 +56,6 @@ export default class Documentation extends Component {
     window.removeEventListener('popstate', this.loadStateFromURL)
   }
 
-  toString(method, str) {
-    switch (method) {
-      case 'filetourl':
-        return str.slice(0, -3)
-        break
-      default:
-        break
-    }
-  }
-
   loadStateFromURL = () => {
     let path = window.location.pathname.split('/')
     let length = path.length

@@ -23,8 +23,8 @@ export default class SidebarMenuHelper {
   static findFileByName = (item, find) => {
     let file = null
     if (
-      (typeof item === 'string' && item.slice(0, -3) === find) ||
-      (item.indexFile && item.indexFile.slice(0, -3) === find)
+      SidebarMenuHelper.removeExtensionFromFileName(item) === find ||
+      SidebarMenuHelper.removeExtensionFromFileName(item.indexFile) === find
     ) {
       file = item
     } else if (item.name && kebabCase(item.name) === find) {
@@ -33,26 +33,32 @@ export default class SidebarMenuHelper {
     return file
   }
 
-  //доделать!
-  static getFile = (arr, find, x, callback) => {
-    for (let i = 0; i < arr.length; i++) {
-      let newfile = SidebarMenuHelper.findFileByName(arr[i], find)
+  static getFile = (arr, find, indexPush, setFile) => {
+    arr.forEach((item, index) => {
+      let newfile = SidebarMenuHelper.findFileByName(item, find)
       if (newfile) {
-        callback(i)
-        return newfile
-      } else if (arr[i].files) {
-        SidebarMenuHelper.getFile(arr[i].files, find, x, callback)
+        indexPush(index)
+        setFile(newfile)
+      } else if (item.files) {
+        SidebarMenuHelper.getFile(item.files, find, indexPush, setFile)
       }
-    }
+    })
   }
 
   static getFileFromUrl = path => {
     let indexes = [],
       file = SidebarMenuHelper.getZeroFile(sidebar)
     for (let x = 2; x < path.length; x++) {
-      file = SidebarMenuHelper.getFile(sidebar, path[x], x, i => {
-        indexes.push(i)
-      })
+      SidebarMenuHelper.getFile(
+        sidebar,
+        path[x],
+        i => {
+          indexes.push(i)
+        },
+        f => {
+          file = f
+        }
+      )
     }
     return {
       file: file,
@@ -106,10 +112,12 @@ export default class SidebarMenuHelper {
   }
 
   static removeExtensionFromFileName(filename) {
-    return filename
-      .split('.')
-      .slice(0, -1)
-      .join('.')
+    if (typeof filename === 'string')
+      return filename
+        .split('.')
+        .slice(0, -1)
+        .join('.')
+    else return null
   }
 
   static getFullPath(folder, file) {
