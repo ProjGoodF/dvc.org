@@ -14,7 +14,6 @@ import Hamburger from '../src/Hamburger'
 import fetch from 'isomorphic-fetch'
 import kebabCase from 'lodash.kebabcase'
 import compact from 'lodash.compact'
-import flatten from 'lodash.flatten'
 import { scroller, animateScroll } from 'react-scroll'
 import 'core-js/fn/array/find-index'
 // styles
@@ -23,6 +22,7 @@ import { media } from '../src/styles'
 // json
 import sidebar from '../src/Documentation/sidebar'
 import SidebarMenuHelper from '../src/Documentation/SidebarMenu/SidebarMenuHelper'
+import { PATH_SEPARATOR } from '../src/Documentation/SidebarMenu/SidebarMenuHelper'
 
 export default class Documentation extends Component {
   constructor() {
@@ -57,7 +57,7 @@ export default class Documentation extends Component {
   }
 
   loadStateFromURL = () => {
-    let path = window.location.pathname.split('/')
+    let path = window.location.pathname.split(PATH_SEPARATOR)
     let length = path.length
     let { file, indexes } = SidebarMenuHelper.getFileFromUrl(path)
     this.loadFile({
@@ -79,14 +79,18 @@ export default class Documentation extends Component {
 
   getLinkHref = (section, subsection = null, file = null) => {
     let sect = sidebar[section]
-    let helper = filename =>
+    let removeExtFunc = filename =>
       SidebarMenuHelper.removeExtensionFromFileName(filename)
-    const sectionSlug = helper(sect.indexFile) || kebabCase(sect.name)
+    const sectionSlug = removeExtFunc(sect.indexFile) || kebabCase(sect.name)
     const subsectionSlug =
-      (subsection && helper(sect.files[subsection].indexFile)) ||
+      (subsection && removeExtFunc(sect.files[subsection].indexFile)) ||
       sect.files[subsection]
-    const fileSlug = helper(file) || (file && file.files[0])
-    return `/doc/${compact([sectionSlug, subsectionSlug, fileSlug]).join('/')}`
+    const fileSlug = removeExtFunc(file) || (file && file.files[0])
+    return `${PATH_SEPARATOR}doc${PATH_SEPARATOR}${compact([
+      sectionSlug,
+      subsectionSlug,
+      fileSlug
+    ]).join(PATH_SEPARATOR)}`
   }
 
   setCurrentPath = (section, subsection, file) => {
@@ -123,7 +127,7 @@ export default class Documentation extends Component {
     parseHeadings
   ) => {
     let helper = SidebarMenuHelper
-    fetch(`${folderpath}/${filepath}`)
+    fetch(helper.combineToPath([folderpath, filepath]))
       .then(res => {
         res.text().then(text => {
           this.setState(
@@ -154,8 +158,8 @@ export default class Documentation extends Component {
     this.setState({ load: true })
     let sect = sidebar[section]
     let subsect = sect.files[subsection]
-    let subfold = subsect && subsect.folder
-    let folderpath = file.folder || subfold || sect.folder
+    let subfolder = subsect && subsect.folder
+    let folderpath = file.folder || subfolder || sect.folder
     let filepath = file.indexFile || file.files || file
     this.setCurrentFile(
       section,

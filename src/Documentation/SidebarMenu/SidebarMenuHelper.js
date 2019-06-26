@@ -2,6 +2,8 @@ import startCase from 'lodash.startcase'
 import kebabCase from 'lodash.kebabcase'
 import sidebar from '../sidebar'
 
+export const PATH_SEPARATOR = '/'
+
 export default class SidebarMenuHelper {
   static fillFilesArray(section, file, arr) {
     let folder = SidebarMenuHelper.getParentFolder(file, section)
@@ -12,22 +14,24 @@ export default class SidebarMenuHelper {
     )
   }
 
+  static combineToPath = subPaths => [].concat(subPaths).join(PATH_SEPARATOR)
+
   static getZeroFile = arr => {
-    if (typeof arr[0] !== 'string') {
-      return arr[0].indexFile || arr[0]
-    } else {
-      this.getZeroFile(arr[0].files)
-    }
+    const firstItem = arr[0]
+    const { files, indexFile } = firstItem
+    return (
+      (files && SidebarMenuHelper.getZeroFile(files)) || indexFile || firstItem
+    )
   }
 
   static findFileByName = (item, find) => {
     let file = null
     if (
-      SidebarMenuHelper.removeExtensionFromFileName(item) === find ||
-      SidebarMenuHelper.removeExtensionFromFileName(item.indexFile) === find
+      SidebarMenuHelper.removeExtensionFromFileName(item.indexFile || item) ===
+      find
     ) {
       file = item
-    } else if (item.name && kebabCase(item.name) === find) {
+    } else if (kebabCase(item.name || '') === find) {
       file = item.files[0]
     }
     return file
@@ -123,13 +127,17 @@ export default class SidebarMenuHelper {
   static getPath(section, subsection = null, file) {
     let sect = sidebar[section]
     let subsect = sect.files[subsection]
-    let subfold = subsect && subsect.folder
-    let path = subfold && `${subfold}/${file.indexFile}`
-    return path || `${sect.folder}/${file}`
+    let subfolder = subsect && subsect.folder
+    let path =
+      subfolder && SidebarMenuHelper.combineToPath([subfolder, file.indexFile])
+    return path || SidebarMenuHelper.combineToPath([sect.folder, file])
   }
 
   static getFullPath(folder, file) {
-    return folder && `${folder}/${file.indexFile || file}`
+    return (
+      folder &&
+      SidebarMenuHelper.combineToPath([folder, file.indexFile || file])
+    )
   }
 
   static extractFilename(file) {
