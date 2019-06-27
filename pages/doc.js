@@ -118,6 +118,29 @@ export default class Documentation extends Component {
     this.loadFile({ section, subsection, file, parseHeadings: true })
   }
 
+  updateStateWithCurrentFile = (
+    markdown,
+    currentSection,
+    currentFile,
+    parseHeadings
+  ) => {
+    this.setState(
+      {
+        currentSection,
+        currentFile,
+        markdown,
+        headings: [],
+        pageNotFound: false,
+        isMenuOpen: false,
+        load: false
+      },
+      () => {
+        this.scrollTop()
+        parseHeadings && this.parseHeadings(markdown)
+      }
+    )
+  }
+
   setCurrentFile = (
     section,
     subsection,
@@ -126,26 +149,18 @@ export default class Documentation extends Component {
     filepath,
     parseHeadings
   ) => {
-    let helper = SidebarMenuHelper
+    const helper = SidebarMenuHelper
     fetch(helper.combineToPath([folderpath, filepath]))
       .then(res => {
-        res.text().then(text => {
-          this.setState(
-            {
-              currentSection: section,
-              currentFile:
-                helper.getFullPath(folderpath, file) ||
-                helper.getPath(section, subsection, file),
-              markdown: text,
-              headings: [],
-              pageNotFound: false,
-              isMenuOpen: false,
-              load: false
-            },
-            () => {
-              this.scrollTop()
-              parseHeadings && this.parseHeadings(text)
-            }
+        res.text().then(markdown => {
+          const currentFile =
+            helper.getFullPath(folderpath, file) ||
+            helper.getPath(section, subsection, file)
+          this.updateStateWithCurrentFile(
+            markdown,
+            section,
+            currentFile,
+            parseHeadings
           )
         })
       })
