@@ -22,6 +22,7 @@ export default class SidebarMenuHelper {
       .join(PATH_SEPARATOR)
       .replace(new RegExp(PATH_TO_DOC, 'i'), '')
       .split(PATH_SEPARATOR)
+      .filter(_ => _)
 
   static combineToPath = subPaths => [].concat(subPaths).join(PATH_SEPARATOR)
 
@@ -63,18 +64,16 @@ export default class SidebarMenuHelper {
       file = SidebarMenuHelper.getZeroFile(sidebar),
       newpath = SidebarMenuHelper.transformAbsoluteToDocRelatedPath(path)
     newpath.forEach(part => {
-      if (part !== '') {
-        SidebarMenuHelper.getFile(
-          sidebar,
-          part,
-          i => {
-            indexes.push(i)
-          },
-          f => {
-            file = f
-          }
-        )
-      }
+      SidebarMenuHelper.getFile(
+        sidebar,
+        part,
+        i => {
+          indexes.push(i)
+        },
+        f => {
+          file = f
+        }
+      )
     })
     return {
       file: file,
