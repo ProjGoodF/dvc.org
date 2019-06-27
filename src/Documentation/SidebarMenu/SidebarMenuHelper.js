@@ -3,6 +3,7 @@ import kebabCase from 'lodash.kebabcase'
 import sidebar from '../sidebar'
 
 export const PATH_SEPARATOR = '/'
+export const PATH_TO_DOC = '/doc'
 
 export default class SidebarMenuHelper {
   static fillFilesArray(section, file, arr) {
@@ -13,6 +14,14 @@ export default class SidebarMenuHelper {
       SidebarMenuHelper.removeExtensionFromFileName(filename)
     )
   }
+
+  static isString = obj => typeof obj === 'string'
+
+  static transformAbsoluteToDocRelatedPath = path =>
+    path
+      .join(PATH_SEPARATOR)
+      .replace(new RegExp(PATH_TO_DOC, 'i'), '')
+      .split(PATH_SEPARATOR)
 
   static combineToPath = subPaths => [].concat(subPaths).join(PATH_SEPARATOR)
 
@@ -51,19 +60,22 @@ export default class SidebarMenuHelper {
 
   static getFileFromUrl = path => {
     let indexes = [],
-      file = SidebarMenuHelper.getZeroFile(sidebar)
-    for (let x = 2; x < path.length; x++) {
-      SidebarMenuHelper.getFile(
-        sidebar,
-        path[x],
-        i => {
-          indexes.push(i)
-        },
-        f => {
-          file = f
-        }
-      )
-    }
+      file = SidebarMenuHelper.getZeroFile(sidebar),
+      newpath = SidebarMenuHelper.transformAbsoluteToDocRelatedPath(path)
+    newpath.forEach(part => {
+      if (part !== '') {
+        SidebarMenuHelper.getFile(
+          sidebar,
+          part,
+          i => {
+            indexes.push(i)
+          },
+          f => {
+            file = f
+          }
+        )
+      }
+    })
     return {
       file: file,
       indexes: indexes
@@ -116,7 +128,7 @@ export default class SidebarMenuHelper {
   }
 
   static removeExtensionFromFileName(filename) {
-    if (typeof filename === 'string')
+    if (SidebarMenuHelper.isString(filename))
       return filename
         .split('.')
         .slice(0, -1)
@@ -141,7 +153,7 @@ export default class SidebarMenuHelper {
   }
 
   static extractFilename(file) {
-    return typeof file === 'string' ? file : file.indexFile
+    return SidebarMenuHelper.isString(file) ? file : file.indexFile
   }
 
   static getParentFolder(file, section) {
